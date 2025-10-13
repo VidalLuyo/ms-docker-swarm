@@ -1,0 +1,14 @@
+# Ignorar archivos innecesarios para Docker
+target/
+.git/
+.gitignore
+README.md
+*.md
+.vscode/
+.idea/
+*.iml
+*.log
+
+# Archivos de desarrollo
+.env*
+docker-compose*.yml

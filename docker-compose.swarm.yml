@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: psychological_evaluations
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d psychological_evaluations"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+
+  psychology-api:
+    image: psychology-api:v2
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: psychological_evaluations
+      DB_USER: admin
+      DB_PASSWORD: admin123
+    ports:
+      - "8085:8085"
+    networks:
+      - ms-net
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+        delay: 15s
+        max_attempts: 15
+        window: 300s
+      placement:
+        preferences:
+          - spread: node.id
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        monitor: 60s
+        max_failure_ratio: 0.3
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: pause
+        monitor: 30s
+        max_failure_ratio: 0.2
+
+volumes:
+  db-data:
+    external: true
+
+networks:
+  ms-net:
+    external: true
+    name: ms-net-swarm
