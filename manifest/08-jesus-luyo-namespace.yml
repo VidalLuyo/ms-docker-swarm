@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: 08-jesus-luyo
+  labels:
+    owner: jesus-luyo
+    project: ms-docker-swarm

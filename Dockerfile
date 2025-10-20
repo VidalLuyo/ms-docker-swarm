@@ -1,27 +1,14 @@
-# Usar imagen base con OpenJDK 17 y instalar Maven
-FROM openjdk:17-jdk-alpine
+# Stage 1: build con Maven dentro del contenedor
+FROM maven:3.9.5-eclipse-temurin-17 AS builder
+WORKDIR /workspace
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B -DskipTests package
 
-# Instalar Maven y curl para healthcheck
-RUN apk add --no-cache maven curl
-
-# Información del mantenedor
-LABEL maintainer="psychology-welfare-api"
-
-# Crear directorio de trabajo
+# Stage 2: runtime ligero
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
-# Copiar todo el proyecto
-COPY . .
-
-# Compilar la aplicación
-RUN mvn clean package -DskipTests
-
-# Exponer el puerto 8085
+ENV SERVER_PORT=8085
 EXPOSE 8085
-
-# Healthcheck para verificar que la aplicación esté funcionando
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8085/actuator/health || exit 1
-
-# Comando para ejecutar la aplicación
-CMD ["java", "-jar", "target/vg-ms-psychology-welfare-0.0.1-SNAPSHOT.jar"]
+COPY --from=builder /workspace/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
