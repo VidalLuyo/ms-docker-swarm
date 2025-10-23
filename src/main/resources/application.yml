@@ -1,0 +1,31 @@
+server:
+  port: ${PORT:9090}  # Valor por defecto si PORT no está configurado
+  url: ${SERVER_URL:http://localhost:9090}  # Valor por defecto si SERVER_URL no está configurado
+
+spring:
+  r2dbc:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  
+  webflux:
+    cors:
+      allowed-origins: "*"
+      allowed-methods: "*"
+      allowed-headers: "*"
+      allow-credentials: false
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  webjars:
+    prefix: /webjars
+
+logging:
+  level:
+    pe.edu.vallegrande: DEBUG
+    org.springframework.r2dbc: DEBUG
